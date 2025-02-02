@@ -48,7 +48,9 @@ def evaluate(model, data_loader, device):
 
             outputs = model(pixel_values=pixel_values.to(device), pixel_mask=masks.to(device), labels=labels)
             orig_target_sizes = torch.stack([target["orig_size"] for target in labels], dim=0)
-            outputs = data_loader.dataset.processor.post_process_object_detection(outputs, target_sizes=orig_target_sizes)
+            outputs = data_loader.dataset.processor.post_process_object_detection(outputs,
+                                                                                  target_sizes=orig_target_sizes,
+                                                                                  threshold=0.1)
             boxes = [d["boxes"] for d in outputs]
             labels = [d["labels"] for d in outputs]
             probs = [d["scores"] for d in outputs]
@@ -72,13 +74,13 @@ def train(model, train_loader, test_loader, optimizer, scaler, start_epoch, args
             save_checkpoint(epoch, model, optimizer, scaler,
                             f"{args.experiments_path}/{args.experiment_name}/last.ckpt")
 
-        if MAP > best_map:
+        if MAP >= best_map:
             save_checkpoint(epoch, model, optimizer, scaler,
                             f"{args.experiments_path}/{args.experiment_name}/best.ckpt")
             best_map = MAP
 
     # Final save
-    save_checkpoint(args.epochs, model, optimizer, scaler, args.checkpoint_path)
+    save_checkpoint(args.epochs, model, optimizer, scaler, f"{args.experiments_path}/{args.experiment_name}/last.ckpt")
 
     # Evaluate on Test Set
     print("Testing complete!")

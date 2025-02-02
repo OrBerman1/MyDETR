@@ -27,7 +27,7 @@ args.add_argument("--lr", default=1e-5, type=float, help="learning rate")
 args.add_argument("--weight_decay", default=1e-4, type=float, help="weight decay")
 args.add_argument("--enable_amp", default=False, type=bool, help="if true use automatic mixed precision")
 args.add_argument("--resume_path", default=None, type=str, help="path to a checkpoint for resume training")
-args.add_argument("--epochs", default=20, type=int, help="number of epochs")
+args.add_argument("--epochs", default=100, type=int, help="number of epochs")
 args.add_argument("--save_every", default=2, type=int, help="save checkpoint every number of epochs")
 args.add_argument("--eval_mode", default=False, action="store_true", help="if true, only eval model. "
                                                                           "Note that resume path is needed else "
@@ -65,7 +65,8 @@ if __name__ == '__main__':
         label_dir=f"{args.test_path}/labels",
         processor=processor,
         bbox_format=args.bbox_format,
-        normalized=args.normalized
+        normalized=args.normalized,
+        train=False
     )
 
     test_loader = DataLoader(test_dataset, batch_size=args.test_batch_size, shuffle=False,

@@ -9,14 +9,15 @@ DETR_FORMAT = 'xywh'
 
 
 class DTERDataset(Dataset):
-    def __init__(self, image_dir, label_dir, transform=None, processor=None, bbox_format="xywh", normalized=True):
-        self.target_size = (800, 800)
+    def __init__(self, image_dir, label_dir, transform=None, processor=None, bbox_format="xywh", normalized=True,
+                 train=True):
         self.image_dir = image_dir
         self.label_dir = label_dir
         self.transform = transform
         self.processor = processor
         self.bbox_format = bbox_format
         self.normalized = normalized   # if the bboxes are already normalized
+        self.train = train
         self.images = sorted(os.listdir(image_dir))
         self.labels = sorted(os.listdir(label_dir))
 
@@ -36,11 +37,14 @@ class DTERDataset(Dataset):
         labels = []
         with open(label_path, "r") as f:
             for line in f:
-                l, x_min, y_min, x_max, y_max = map(float, line.strip().split())
+                l, a, b, c, d = map(float, line.strip().split())
                 labels.append(l)
                 if self.bbox_format != DETR_FORMAT:
-                    x_min, y_min, x_max, y_max = self.convert_to_cxcywh([x_min, y_min, x_max, y_max], width, height)
-                boxes.append([x_min, y_min, x_max, y_max])
+                    a, b, c, d = self.convert_to_xywh([a, b, c, d], width, height)
+                if not self.train:  # inference format should be xyxy
+                    c += a
+                    d += b
+                boxes.append([a, b, c, d])
 
         # Convert to tensor
         if self.processor:
@@ -71,8 +75,11 @@ class DTERDataset(Dataset):
             #     ann['bbox'] = [x_min_rescaled, y_min_rescaled, width_rescaled, height_rescaled]
 
             encoding = self.processor(images=image, annotations=annotations, return_tensors="pt")
+        encoding["orig_size"] = torch.tensor([width, height])
         pixel_values = encoding["pixel_values"].squeeze()
         target = encoding["labels"][0]
+        if not self.train:
+            target["boxes"] = torch.tensor(boxes)
 
         if self.transform:
             print("transform is not supported at the moment!")
@@ -80,7 +87,7 @@ class DTERDataset(Dataset):
 
         return pixel_values, target
 
-    def convert_to_cxcywh(self, bbox, image_width, image_height):
+    def convert_to_xywh(self, bbox, image_width, image_height):
         if self.bbox_format != DETR_FORMAT:
             bbox = box_convert(torch.tensor(bbox).unsqueeze(0), self.bbox_format, DETR_FORMAT)
 
