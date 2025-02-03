@@ -7,6 +7,7 @@ from checkpoint import load_checkpoint
 from torch.utils.data import DataLoader
 from ml_opts import train, evaluate
 from models import get_detr
+import json
 
 
 args = argparse.ArgumentParser()
@@ -42,10 +43,10 @@ os.makedirs(f"{args.experiments_path}/{args.experiment_name}", exist_ok=True)
 log_file = f"{args.experiments_path}/{args.experiment_name}/log_file.txt"
 log.creat_logger(log_file)
 
-args.num_classes += 1
-
 
 if __name__ == '__main__':
+    print(json.dumps(vars(args), indent=4))
+
     model, processor = get_detr(args.num_classes, args.device)
 
     # Dataset and DataLoader
@@ -63,6 +64,8 @@ if __name__ == '__main__':
     test_dataset = DTERDataset(
         image_dir=f"{args.test_path}/images",
         label_dir=f"{args.test_path}/labels",
+        # image_dir=f"{args.train_path}/images",
+        # label_dir=f"{args.train_path}/labels",
         processor=processor,
         bbox_format=args.bbox_format,
         normalized=args.normalized,

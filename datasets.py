@@ -38,7 +38,7 @@ class DTERDataset(Dataset):
         with open(label_path, "r") as f:
             for line in f:
                 l, a, b, c, d = map(float, line.strip().split())
-                labels.append(l)
+                labels.append(l)    #  + 1)
                 if self.bbox_format != DETR_FORMAT:
                     a, b, c, d = self.convert_to_xywh([a, b, c, d], width, height)
                 if not self.train:  # inference format should be xyxy
@@ -75,7 +75,7 @@ class DTERDataset(Dataset):
             #     ann['bbox'] = [x_min_rescaled, y_min_rescaled, width_rescaled, height_rescaled]
 
             encoding = self.processor(images=image, annotations=annotations, return_tensors="pt")
-        encoding["orig_size"] = torch.tensor([width, height])
+        # encoding["orig_size"] = torch.tensor([height, width])
         pixel_values = encoding["pixel_values"].squeeze()
         target = encoding["labels"][0]
         if not self.train:

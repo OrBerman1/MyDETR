@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from metrics import calculate_ap_and_map
 from checkpoint import save_checkpoint
 from tqdm import tqdm as tqdm
-from metrics import prepare_for_coco_detection
+from metrics import prepare_for_coco_detection, calculate_ap
 
 
 def train_one_epoch(model, data_loader, optimizer, scaler, device, enable_amp):
@@ -26,7 +26,6 @@ def train_one_epoch(model, data_loader, optimizer, scaler, device, enable_amp):
         scaler.step(optimizer)
         scaler.update()
         optimizer.zero_grad()
-
     return total_loss / len(data_loader)
 
 
@@ -50,7 +49,7 @@ def evaluate(model, data_loader, device):
             orig_target_sizes = torch.stack([target["orig_size"] for target in labels], dim=0)
             outputs = data_loader.dataset.processor.post_process_object_detection(outputs,
                                                                                   target_sizes=orig_target_sizes,
-                                                                                  threshold=0.1)
+                                                                                  threshold=0)
             boxes = [d["boxes"] for d in outputs]
             labels = [d["labels"] for d in outputs]
             probs = [d["scores"] for d in outputs]
@@ -58,7 +57,7 @@ def evaluate(model, data_loader, device):
             pred_bboxes += boxes
             pred_probs += probs
             pred_labels += labels
-    return calculate_ap_and_map(pred_bboxes, pred_probs, pred_labels, all_targets)
+    return calculate_ap(pred_bboxes, pred_probs, pred_labels, all_targets)
 
 
 def train(model, train_loader, test_loader, optimizer, scaler, start_epoch, args):
@@ -66,8 +65,8 @@ def train(model, train_loader, test_loader, optimizer, scaler, start_epoch, args
     for epoch in range(start_epoch, args.epochs):
         train_loss = train_one_epoch(model, train_loader, optimizer, scaler, args.device, args.enable_amp)
         print(f"Epoch {epoch + 1}/{args.epochs}, Loss: {train_loss:.4f}")
-        test_results = evaluate(model, test_loader, args.device)
-        MAP = test_results["map"]
+        MAP, _ = evaluate(model, test_loader, args.device)
+        # MAP = test_results["map"]
 
         # Save checkpoint every 'save_every' epochs
         if (epoch + 1) % args.save_every == 0:
