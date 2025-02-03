@@ -116,7 +116,7 @@ def _get_class_ap(coco_eval, coco_gt):
         precision = precisions[:, :, i, 0, -1]
         precision = precision[precision > -1]
         ap = np.mean(precision) if precision.size else float("nan")
-        ap_per_category[i] = ap * 100
+        ap_per_category[i + 1] = ap * 100
     return ap_per_category
 
 
@@ -127,7 +127,7 @@ def _get_class_ar(coco_eval, coco_gt):
         recall = recalls[:, i, 0, -1]
         recall = recall[recall > -1]
         ar = np.mean(recall) if recall.size else float("nan")
-        ar_per_category[i] = ar * 100
+        ar_per_category[i + 1] = ar * 100
     return ar_per_category
 
 
@@ -149,13 +149,15 @@ def calculate_ap(pred_boxes, pred_scores, pred_labels, target, iou_threshold=0.5
     category_ids = list(set(gt['category_id'] for gt in ground_truths))
     categories = [{'id': cat_id, 'name': f'category_{cat_id}', "supercategory": "none"} for cat_id in category_ids]
 
-    # Construct a proper COCO-formatted dataset
-    coco_gt = COCO()
-    coco_gt.dataset = {
+    ds = {
         'images': [{'id': img_id} for img_id in image_ids],  # Image metadata
         'annotations': ground_truths,  # Ground truth bounding boxes
         'categories': categories,  # Categories information
     }
+
+    # Construct a proper COCO-formatted dataset
+    coco_gt = COCO()
+    coco_gt.dataset = ds
     coco_gt.createIndex()
 
     # Load predictions
@@ -170,7 +172,7 @@ def calculate_ap(pred_boxes, pred_scores, pred_labels, target, iou_threshold=0.5
     coco_eval.summarize()
 
     # Return the MAP (mean AP)
-    mean_ap = coco_eval.stats[0] * 100 # MAP is the first metric in the stats list.
+    mean_ap = coco_eval.stats[0] * 100  # MAP is the first metric in the stats list.
 
     # Return the individual AP for each category as well
     ap_per_category = _get_class_ap(coco_eval, coco_gt)

@@ -64,6 +64,8 @@ if __name__ == '__main__':
     test_dataset = DTERDataset(
         image_dir=f"{args.test_path}/images",
         label_dir=f"{args.test_path}/labels",
+        # image_dir=f"{args.train_path}/images",
+        # label_dir=f"{args.train_path}/labels",
         processor=processor,
         bbox_format=args.bbox_format,
         normalized=args.normalized,

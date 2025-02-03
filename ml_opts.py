@@ -26,7 +26,6 @@ def train_one_epoch(model, data_loader, optimizer, scaler, device, enable_amp):
         scaler.step(optimizer)
         scaler.update()
         optimizer.zero_grad()
-
     return total_loss / len(data_loader)
 
 
@@ -50,7 +49,7 @@ def evaluate(model, data_loader, device):
             orig_target_sizes = torch.stack([target["orig_size"] for target in labels], dim=0)
             outputs = data_loader.dataset.processor.post_process_object_detection(outputs,
                                                                                   target_sizes=orig_target_sizes,
-                                                                                  threshold=0.1)
+                                                                                  threshold=0)
             boxes = [d["boxes"] for d in outputs]
             labels = [d["labels"] for d in outputs]
             probs = [d["scores"] for d in outputs]
