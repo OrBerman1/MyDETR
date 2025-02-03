@@ -48,7 +48,6 @@ class DTERDataset(Dataset):
 
         # Convert to tensor
         if self.processor:
-            # annotations = [{"bbox": bb, "category_id": l} for bb, l in zip(boxes, labels)]
             annotations = {
                 'image_id': idx,  # Unique ID for the image (could be anything, here we use 0)
                 'annotations': [
@@ -60,22 +59,7 @@ class DTERDataset(Dataset):
                     for box, label in zip(boxes, labels)
                 ]
             }
-            # image = image.resize(self.target_size)
-            #
-            # for ann in annotations['annotations']:
-            #     # Extract the original bounding box [x_min, y_min, width, height]
-            #     x_min, y_min, width, height = ann['bbox']
-            #
-            #     # Rescale the bounding box to the new image size
-            #     x_min_rescaled = x_min * self.target_size[0] / width  # scale x_min to new width
-            #     y_min_rescaled = y_min * self.target_size[1] / height  # scale y_min to new height
-            #     width_rescaled = width * self.target_size[0] / width  # scale width to new width
-            #     height_rescaled = height * self.target_size[1] / height  # scale height to new height
-            #
-            #     ann['bbox'] = [x_min_rescaled, y_min_rescaled, width_rescaled, height_rescaled]
-
             encoding = self.processor(images=image, annotations=annotations, return_tensors="pt")
-        # encoding["orig_size"] = torch.tensor([height, width])
         pixel_values = encoding["pixel_values"].squeeze()
         target = encoding["labels"][0]
         if not self.train:

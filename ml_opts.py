@@ -1,19 +1,13 @@
-import logging
-from coco_eval import CocoEvaluator
 import torch
-import torch.nn.functional as F
-from metrics import calculate_ap_and_map
 from checkpoint import save_checkpoint
 from tqdm import tqdm as tqdm
-from metrics import prepare_for_coco_detection, calculate_ap
+from metrics import calculate_ap
 
 
 def train_one_epoch(model, data_loader, optimizer, scaler, device, enable_amp):
     model.train()
     total_loss = 0
     for pixel_values, targets in tqdm(data_loader, total=len(data_loader)):
-        # images = list(image.to(device) for image in images)
-        # targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
         padded = data_loader.dataset.processor.pad(pixel_values, return_tensors="pt")
         pixel_values = padded['pixel_values']
         masks = padded['pixel_mask']
