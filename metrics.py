@@ -131,6 +131,28 @@ def _get_class_ar(coco_eval, coco_gt):
     return ar_per_category
 
 
+def get_class_ap(coco_eval, num_classes):
+    ap_per_category = {}
+    precisions = coco_eval.eval["precision"]
+    for i in range(num_classes):
+        precision = precisions[:, :, i, 0, -1]
+        precision = precision[precision > -1]
+        ap = np.mean(precision) if precision.size else float("nan")
+        ap_per_category[i + 1] = ap * 100
+    return ap_per_category
+
+
+def get_class_ar(coco_eval, num_classes):
+    ar_per_category = {}
+    recalls = coco_eval.eval["recall"]
+    for i in range(num_classes):
+        recall = recalls[:, i, 0, -1]
+        recall = recall[recall > -1]
+        ar = np.mean(recall) if recall.size else float("nan")
+        ar_per_category[i + 1] = ar * 100
+    return ar_per_category
+
+
 def calculate_ap(pred_boxes, pred_scores, pred_labels, target, iou_threshold=0.5):
     """
     Calculate Average Precision (AP) using COCO evaluation.
